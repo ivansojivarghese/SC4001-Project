@@ -19,50 +19,42 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from transformers import AutoModel, AutoTokenizer
-from sentence_transformers import SentenceTransformer, losses
 from datasets import load_dataset
+from sklearn.metrics import accuracy_score, f1_score
 
-# Step 1: Load Pretrained Transformer (BERT, GPT-4, T5, SetFit)
-MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModel.from_pretrained(MODEL_NAME)
+# Load RoBERTa & DeBERTa Models and Tokenizers
+roberta_model = AutoModel.from_pretrained("roberta-base")
+deberta_model = AutoModel.from_pretrained("microsoft/deberta-v3-base")
+roberta_tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+deberta_tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-v3-base")
 
-# Step 2: Meta-Learning (MAML) Setup
-class MAMLWrapper(nn.Module):
+# Define Sentiment Classifier
+class SentimentClassifier(nn.Module):
     def __init__(self, base_model):
         super().__init__()
         self.base_model = base_model
-        self.classifier = nn.Linear(768, 3)  # Sentiment: Positive, Neutral, Negative
+        self.classifier = nn.Linear(768, 3)  # 3 sentiment classes: Positive, Neutral, Negative
 
     def forward(self, input_ids, attention_mask):
-        embeddings = self.base_model(input_ids=input_ids, attention_mask=attention_mask)[0][:, 0, :]
-        return self.classifier(embeddings)
+        outputs = self.base_model(input_ids=input_ids, attention_mask=attention_mask)[0][:, 0, :]
+        return self.classifier(outputs)
 
-# Step 3: Contrastive Few-Shot Learning (SetFit) Setup
-sentence_model = SentenceTransformer(MODEL_NAME)
-loss_function = losses.CosineSimilarityLoss(sentence_model)
+# Instantiate Models
+roberta_classifier = SentimentClassifier(roberta_model)
+deberta_classifier = SentimentClassifier(deberta_model)
 
-# Step 4: Adversarial Domain Adaptation (DANN)
-class DomainDiscriminator(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.fc = nn.Linear(768, 2)  # Binary classification: Source vs Target domain
+# Load a sample dataset for few-shot learning
+dataset = load_dataset("sst2", split="train[:100]")
 
-    def forward(self, features):
-        return self.fc(features)
-
-domain_discriminator = DomainDiscriminator()
-
-# Training Setup
-def train_model(model, dataset):
+def train_model(model, tokenizer, dataset):
     optimizer = optim.Adam(model.parameters(), lr=2e-5)
     loss_fn = nn.CrossEntropyLoss()
     model.train()
 
     for batch in dataset:
         inputs = tokenizer(batch["text"], padding=True, truncation=True, return_tensors="pt")
-        labels = torch.tensor(batch["label"])  # Sentiment labels
-        outputs = model(**inputs)
+        labels = torch.tensor(batch["label"]).unsqueeze(0)  # Ensure labels have correct shape
+        outputs = model(input_ids=inputs["input_ids"], attention_mask=inputs["attention_mask"])
         loss = loss_fn(outputs, labels)
         optimizer.zero_grad()
         loss.backward()
@@ -70,6 +62,30 @@ def train_model(model, dataset):
 
     print("Training complete!")
 
-# Load a sample dataset for few-shot learning
-dataset = load_dataset("sst2", split="train[:100]")
-train_model(MAMLWrapper(model), dataset)
+# Train RoBERTa and DeBERTa models
+train_model(roberta_classifier, roberta_tokenizer, dataset)
+train_model(deberta_classifier, deberta_tokenizer, dataset)
+
+def predict_sentiment(model, tokenizer, texts):
+    inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+    outputs = model(input_ids=inputs["input_ids"], attention_mask=inputs["attention_mask"])
+    predictions = torch.argmax(outputs, dim=1)
+    return predictions
+
+# Load test dataset
+test_dataset = load_dataset("imdb", split="test[:100]")
+test_texts = test_dataset["text"]
+true_labels = torch.tensor(test_dataset["label"])
+
+# Predict and evaluate
+roberta_predictions = predict_sentiment(roberta_classifier, roberta_tokenizer, test_texts)
+deberta_predictions = predict_sentiment(deberta_classifier, deberta_tokenizer, test_texts)
+
+# Calculate Accuracy & F1-score
+roberta_accuracy = accuracy_score(true_labels, roberta_predictions)
+roberta_f1 = f1_score(true_labels, roberta_predictions, average="weighted")
+deberta_accuracy = accuracy_score(true_labels, deberta_predictions)
+deberta_f1 = f1_score(true_labels, deberta_predictions, average="weighted")
+
+print(f"RoBERTa Accuracy: {roberta_accuracy:.4f}, F1 Score: {roberta_f1:.4f}")
+print(f"DeBERTa Accuracy: {deberta_accuracy:.4f}, F1 Score: {deberta_f1:.4f}")
