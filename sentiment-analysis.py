@@ -1,4 +1,20 @@
 
+'''
+
+This script sets up:
+✅ Multi-Task Learning (MTL) – Using a single model across domains.
+✅ Meta-Learning (MAML) – For fast adaptation to new datasets.
+✅ Contrastive Learning (SetFit) – For efficient few-shot classification.
+✅ Domain Adaptation (DANN) – Making the model robust to domain shifts.
+
+To test the sentiment analysis model, we need to:
+> Prepare test data – Load a test dataset from a different domain.
+> Perform inference – Run the trained model on new text samples.
+> Evaluate performance – Measure accuracy, F1-score, and domain generalization.
+
+'''
+
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
