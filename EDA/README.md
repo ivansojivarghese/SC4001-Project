@@ -118,7 +118,7 @@ These engineered features help move beyond simple bag-of-words models by introdu
 Such features are particularly useful for NLP tasks such as sentiment analysis, review classification, and customer feedback modeling, enabling more accurate and interpretable machine learning models.
 
 ### Step 7: Saving Cleaned Data
-After cleaning and performing EDA, the cleaned data is saved into new CSV files (IMDB_Dataset_Cleaned.csv and SST2_Dataset_Cleaned.csv).
+After cleaning and performing EDA, the cleaned data is saved into new CSV files (IMDB_Dataset_Cleaned_Featured.csv and SST2_Dataset_Cleaned_Featured.csv).
 
 ### Summary of Why the Data Was Cleaned This Way:
 Preprocessing: Text cleaning (lowercasing, punctuation removal, lemmatization, and stopwords removal) standardizes the text and makes it more consistent, allowing for better analysis and model performance.
@@ -128,6 +128,8 @@ Tokenization: Breaking the text into words helps in understanding the frequency 
 Class Distribution & Length Distribution: Helps identify any biases or trends in the dataset (e.g., imbalances or lengths of reviews that may require further attention).
 
 Column Renaming and Dropping: Improves readability and consistency, preparing the data for use in machine learning models and analyses.
+
+Advanced Feature Engineering: Several enriched textual features were computed, such as TF-IDF scores, sentiment polarity, POS tag distributions, sentiment shifts, and syllable counts. These features capture both surface-level and deep linguistic properties of the text, enhancing model interpretability and performance.
 
 Saving Cleaned Data: Ensures that the data is saved in a clean and structured format for easy use in future tasks.
 
