@@ -91,7 +91,33 @@ The distribution of review lengths provides insights into the nature of the revi
 
 This information might also help determine thresholds for truncating or padding reviews during preprocessing for machine learning models.
 
-### Step 6: Saving Cleaned Data
+### Step 6: Advanced Feature Engineering
+
+A custom function ```compute_advanced_features(df)``` is defined to compute a variety of enriched textual features for each review. These features aim to capture not just surface-level text statistics, but also deeper linguistic and semantic information.
+
+The function sequentially applies the following sub-functions:
+
+#### TF-IDF Features (compute_tfidf_features):
+Transforms the review text into a numerical representation based on Term Frequency-Inverse Document Frequency. This highlights words that are important in individual reviews but not common across all reviews.
+
+#### Sentiment Lexicon Score (sentiment_lexicon_score):
+Calculates a sentiment score using predefined sentiment lexicons. This provides a numeric measure of how positive or negative a review might be based on its vocabulary.
+
+#### POS Tagging Features (pos_tagging_features):
+Extracts syntactic features by counting parts of speech (e.g., nouns, adjectives, verbs). This helps analyze the grammatical structure of reviews and can be useful for understanding tone and style.
+
+#### Sentiment Shift (sentiment_shift):
+Measures how sentiment fluctuates throughout a review. For example, a review might start negatively and end positively. This dynamic change can be informative for sentiment classification.
+
+#### Syllable Count (compute_syllables):
+Adds a feature that counts the number of syllables in each review, which can be a proxy for linguistic complexity or readability.
+
+#### Why this Feature Engineering:
+These engineered features help move beyond simple bag-of-words models by introducing semantic, syntactic, and structural characteristics of text. They enhance model understanding by capturing nuances like sentiment intensity, grammatical patterns, and lexical richness.
+
+Such features are particularly useful for NLP tasks such as sentiment analysis, review classification, and customer feedback modeling, enabling more accurate and interpretable machine learning models.
+
+### Step 7: Saving Cleaned Data
 After cleaning and performing EDA, the cleaned data is saved into new CSV files (IMDB_Dataset_Cleaned.csv and SST2_Dataset_Cleaned.csv).
 
 ### Summary of Why the Data Was Cleaned This Way:
